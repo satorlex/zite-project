@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Break & Bio Tracker</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom animations mapped from Tailwind config */
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slide-in-from-top-4 {
+      from { transform: translateY(-1rem); }
+      to { transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fade-in 0.3s ease-out, slide-in-from-top-4 0.3s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 font-sans">
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- HEADER: Live Clock & Status -->
+    <header class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-4">
+        <div class="p-4 bg-blue-500/20 text-blue-400 rounded-full">
+          <i data-lucide="clock" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm uppercase tracking-wider font-semibold">Current Time</p>
+          <h1 id="clock-display" class="text-4xl md:text-5xl font-bold tracking-tight">--:--:--</h1>
+        </div>
+      </div>
+
+      <div id="status-box" class="px-8 py-4 rounded-xl flex flex-col items-center justify-center min-w-[250px] border-2 transition-colors bg-slate-700/10 border-slate-500/30 text-slate-500">
+        <p id="status-name" class="text-sm uppercase tracking-widest font-bold mb-1">OFF SHIFT</p>
+        <div id="duration-display" class="text-4xl font-mono font-bold">00:00</div>
+        <p id="overtime-msg" class="text-xs text-red-400 mt-2 font-semibold hidden">OVER 4 MIN LIMIT!</p>
+      </div>
+    </header>
+
+    <!-- ERROR/WARNING ALERTS -->
+    <div id="error-alert" class="hidden bg-red-500/20 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl flex items-center gap-3 animate-in">
+      <i data-lucide="alert-circle" class="text-red-400 shrink-0"></i>
+      <p id="error-msg" class="font-medium"></p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- LEFT COLUMN: Controls -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- SHIFT MANAGEMENT -->
+        <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+          <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Shift Management
+          </h2>
+          <div class="flex flex-col sm:flex-row gap-4 items-center">
+            <input type="text" id="user-name" placeholder="Enter your Name" class="bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-slate-200 w-full sm:w-auto flex-1 focus:outline-none focus:border-blue-500">
+            <button id="btn-time-in" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition-all w-full sm:w-auto flex items-center justify-center gap-2">
+              <i data-lucide="log-in" class="w-5 h-5"></i> Time In
+            </button>
+            <button id="btn-time-out" class="hidden bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-bold transition-all w-full sm:w-auto flex items-center justify-center gap-2">
+              <i data-lucide="log-out" class="w-5 h-5"></i> Time Out
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+          <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <i data-lucide="play" class="text-blue-400 w-5 h-5"></i> Action Controls
+          </h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <button id="btn-resume" class="hidden col-span-1 sm:col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20">
+              <i data-lucide="check-circle" class="w-6 h-6"></i> Resume Work
+            </button>
+
+            <button id="btn-break1" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors border border-slate-600 hover:border-slate-500">
+              <i data-lucide="coffee" class="text-orange-400"></i>
+              <span id="txt-break1" class="font-semibold">Punch 1st Break</span>
+            </button>
+
+            <button id="btn-lunch" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors border border-slate-600 hover:border-slate-500">
+              <i data-lucide="utensils" class="text-purple-400"></i>
+              <span id="txt-lunch" class="font-semibold">Punch Lunch</span>
+            </button>
+
+            <button id="btn-break2" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors border border-slate-600 hover:border-slate-500">
+              <i data-lucide="coffee" class="text-orange-400"></i>
+              <span id="txt-break2" class="font-semibold">Punch 2nd Break</span>
+            </button>
+
+            <button id="btn-bio" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors border border-yellow-600/50 hover:border-yellow-500 relative overflow-hidden group">
+              <div class="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors"></div>
+              <i data-lucide="activity" class="text-yellow-400 relative z-10"></i>
+              <span id="txt-bio" class="font-semibold relative z-10">Punch Bio Break</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- LOGS SECTION -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- SHIFT LOGBOOK -->
+          <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <i data-lucide="book-open" class="text-slate-400 w-5 h-5"></i> Shift Logbook
+            </h2>
+            <p id="empty-shift-logs" class="text-slate-500 text-center py-8">No shifts recorded yet.</p>
+            <div id="shift-logs-container" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+              <!-- Shift Logs injected via JS -->
+            </div>
+          </div>
+
+          <!-- PUNCH HISTORY -->
+          <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <i data-lucide="clock" class="text-slate-400 w-5 h-5"></i> Break History
+            </h2>
+            <p id="empty-punch-logs" class="text-slate-500 text-center py-8">No breaks recorded yet.</p>
+            <div id="punch-logs-container" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+              <!-- Punch Logs injected via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Guidelines -->
+      <div class="space-y-6">
+        <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+          <h2 class="text-lg font-bold mb-4 text-blue-400">Scheduled Windows</h2>
+          <ul class="space-y-4 text-sm">
+            <li class="flex justify-between items-center border-b border-slate-700 pb-2">
+              <span class="text-slate-300 flex items-center gap-2"><i data-lucide="coffee" class="w-4 h-4"></i> First Break</span>
+              <span class="font-mono text-slate-400">11:00 PM - 1:00 AM</span>
+            </li>
+            <li class="flex justify-between items-center border-b border-slate-700 pb-2">
+              <span class="text-slate-300 flex items-center gap-2"><i data-lucide="utensils" class="w-4 h-4"></i> Lunch</span>
+              <span class="font-mono text-slate-400">2:00 AM - 3:00 AM</span>
+            </li>
+            <li class="flex justify-between items-center pb-2">
+              <span class="text-slate-300 flex items-center gap-2"><i data-lucide="coffee" class="w-4 h-4"></i> Second Break</span>
+              <span class="font-mono text-slate-400">4:00 AM - 5:00 AM</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-yellow-900/50">
+          <h2 class="text-lg font-bold mb-4 text-yellow-400 flex items-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5"></i> Bio Break Rules
+          </h2>
+          <ul class="space-y-3 text-sm text-slate-300 list-disc pl-4">
+            <li><strong class="text-white">Max Duration:</strong> 4 Minutes</li>
+            <li><strong class="text-white">After Breaks:</strong> Cannot punch bio within <strong class="text-yellow-400">30 mins</strong> of finishing a scheduled break.</li>
+            <li><strong class="text-white">Bio Gap:</strong> If no recent breaks, there must be a <strong class="text-yellow-400">10 min</strong> gap between consecutive bio breaks.</li>
+            <li><strong class="text-white">End of Shift:</strong> Cannot punch bio if less than <strong class="text-yellow-400">10 mins</strong> left before shift end (6:00 AM).</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Initialize Icons
+    lucide.createIcons();
+
+    // Application State
+    let status = 'OFF_SHIFT'; // 'OFF_SHIFT', 'WORKING', 'BREAK_1', 'LUNCH', 'BREAK_2', 'BIO'
+    let statusStartTime = Date.now();
+    let currentDuration = 0; // in seconds
+    
+    let lastMainBreakEnd = null;
+    let lastBioEnd = null;
+    let lastLoginDate = null;
+    let lastLogoutDate = null;
+    
+    // Once-per-shift break tracking
+    let usedBreak1 = false;
+    let usedLunch = false;
+    let usedBreak2 = false;
+
+    // Separated Data Arrays
+    let shiftLogs = [];
+    let punchLogs = [];
+    
+    let errorTimeout = null;
+    let bioWarningPlayed = false; // Tracking flag for the 2-minute alarm
+    
+    // Audio Context for the Alarm
+    let audioCtx = null;
+
+    // DOM Elements
+    const els = {
+      clockDisplay: document.getElementById('clock-display'),
+      statusBox: document.getElementById('status-box'),
+      statusName: document.getElementById('status-name'),
+      durationDisplay: document.getElementById('duration-display'),
+      overtimeMsg: document.getElementById('overtime-msg'),
+      errorAlert: document.getElementById('error-alert'),
+      errorMsg: document.getElementById('error-msg'),
+      
+      // Shift UI Elements
+      userNameInput: document.getElementById('user-name'),
+      btnTimeIn: document.getElementById('btn-time-in'),
+      btnTimeOut: document.getElementById('btn-time-out'),
+
+      // Action UI Elements
+      btnResume: document.getElementById('btn-resume'),
+      btnBreak1: document.getElementById('btn-break1'),
+      btnLunch: document.getElementById('btn-lunch'),
+      btnBreak2: document.getElementById('btn-break2'),
+      btnBio: document.getElementById('btn-bio'),
+      
+      // Separated Log Containers
+      emptyShiftLogs: document.getElementById('empty-shift-logs'),
+      shiftLogsContainer: document.getElementById('shift-logs-container'),
+      emptyPunchLogs: document.getElementById('empty-punch-logs'),
+      punchLogsContainer: document.getElementById('punch-logs-container'),
+      
+      txtBreak1: document.getElementById('txt-break1'),
+      txtLunch: document.getElementById('txt-lunch'),
+      txtBreak2: document.getElementById('txt-break2'),
+      txtBio: document.getElementById('txt-bio')
+    };
+
+    // Initialize Web Audio API after user interaction
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Play a warning beep (2 mins left)
+    function playWarningAlarm() {
+      if (!audioCtx) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine'; // Softer tone for warning
+      oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // Lower pitch
+      
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.6);
+    }
+
+    // Play the final overtime beep
+    function playAlarm() {
+      if (!audioCtx) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note (high pitch)
+      
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Kept relatively quiet
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    }
+
+    // Helper formatting
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function formatDuration(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      
+      if (h > 0) {
+        return `${h.toString().padStart(2, '0')}:${m}:${s}`;
+      }
+      return `${m}:${s}`;
+    }
+
+    // Helper to get the logical shift date (handles overnight shifts by subtracting 1 day if before noon)
+    function getShiftDate() {
+      const d = new Date();
+      if (d.getHours() < 12) {
+        d.setDate(d.getDate() - 1);
+      }
+      return d.toLocaleDateString();
+    }
+
+    function showError(message) {
+      els.errorMsg.textContent = message;
+      els.errorAlert.classList.remove('hidden');
+      
+      if (errorTimeout) clearTimeout(errorTimeout);
+      errorTimeout = setTimeout(() => {
+        els.errorAlert.classList.add('hidden');
+      }, 5000);
+    }
+
+    function renderShiftLogs() {
+      if (shiftLogs.length === 0) {
+        els.emptyShiftLogs.classList.remove('hidden');
+        els.shiftLogsContainer.innerHTML = '';
+        return;
+      }
+      
+      els.emptyShiftLogs.classList.add('hidden');
+      els.shiftLogsContainer.innerHTML = shiftLogs.map(log => `
+        <div class="flex flex-col bg-slate-700/50 p-3 rounded-lg border-l-4 ${log.type === 'LOGIN' ? 'border-l-blue-500' : 'border-l-red-500'}">
+          <div class="font-bold text-slate-100 uppercase">${log.name}</div>
+          <div class="text-sm text-slate-300 my-1">${log.date}</div>
+          <div class="font-mono text-sm font-black ${log.type === 'LOGIN' ? 'text-blue-400' : 'text-red-400'}">${log.type}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderPunchLogs() {
+      if (punchLogs.length === 0) {
+        els.emptyPunchLogs.classList.remove('hidden');
+        els.punchLogsContainer.innerHTML = '';
+        return;
+      }
+      
+      els.emptyPunchLogs.classList.add('hidden');
+      els.punchLogsContainer.innerHTML = punchLogs.map(log => {
+        const h = Math.floor(log.duration / 3600);
+        const m = Math.floor((log.duration % 3600) / 60);
+        const s = log.duration % 60;
+        const durationStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+        return `
+        <div class="flex items-center justify-between bg-slate-700/50 p-3 rounded-lg border border-slate-600/50">
+          <div>
+            <p class="font-semibold text-slate-200">${log.activity}</p>
+            <p class="text-xs text-slate-400">
+              <span class="text-emerald-400">${log.startTime}</span> to 
+              <span class="text-orange-400">${log.endTime}</span>
+            </p>
+          </div>
+          <div class="font-mono text-sm bg-slate-900 px-3 py-1 rounded text-slate-300">
+            ${durationStr}
+          </div>
+        </div>
+        `;
+      }).join('');
+    }
+
+    function updateUI() {
+      // 1. Update Clock & Duration Texts
+      const now = Date.now();
+      els.clockDisplay.textContent = formatTime(new Date(now));
+      
+      let displayStatusName = status.replace('_', ' ');
+
+      if (status === 'OFF_SHIFT') {
+         els.durationDisplay.textContent = "00:00";
+         currentDuration = 0;
+      } else if (status === 'WORKING') {
+         const d = new Date(now);
+         if (d.getHours() < 12) d.setDate(d.getDate() - 1);
+         d.setHours(21, 0, 0, 0); // 9:00 PM
+         const shiftStart = d.getTime();
+         
+         const effectiveStartTime = Math.max(statusStartTime, shiftStart);
+         currentDuration = Math.max(0, Math.floor((now - effectiveStartTime) / 1000));
+         
+         if (now < shiftStart) {
+             displayStatusName = "PRE-SHIFT (STARTS 9 PM)";
+         }
+         els.durationDisplay.textContent = formatDuration(currentDuration);
+      } else {
+         currentDuration = Math.floor((now - statusStartTime) / 1000);
+         els.durationDisplay.textContent = formatDuration(currentDuration);
+      }
+
+      // 2. Update Status Box Styling
+      const isBioOvertime = status === 'BIO' && currentDuration >= 240; // 4 minutes = 240s
+      els.statusName.textContent = displayStatusName;
+      
+      // Reset classes
+      els.statusBox.className = 'px-8 py-4 rounded-xl flex flex-col items-center justify-center min-w-[250px] border-2 transition-colors';
+      els.overtimeMsg.classList.add('hidden');
+
+      if (status === 'OFF_SHIFT') {
+        els.statusBox.classList.add('bg-slate-700/10', 'border-slate-500/30', 'text-slate-500');
+      } else if (status === 'WORKING') {
+        els.statusBox.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-400');
+      } else if (status === 'BREAK_1' || status === 'BREAK_2') {
+        els.statusBox.classList.add('bg-orange-500/10', 'border-orange-500/30', 'text-orange-400');
+      } else if (status === 'LUNCH') {
+        els.statusBox.classList.add('bg-purple-500/10', 'border-purple-500/30', 'text-purple-400');
+      } else if (status === 'BIO') {
+        if (!isBioOvertime) {
+          els.statusBox.classList.add('bg-yellow-500/10', 'border-yellow-500/30', 'text-yellow-400');
+          
+          // 2-MIN WARNING ALARM TRIGGER
+          if (currentDuration >= 120 && !bioWarningPlayed) {
+            playWarningAlarm();
+            showError("Heads up: Only 2 minutes left on your Bio Break!");
+            bioWarningPlayed = true;
+          }
+
+        } else {
+          els.statusBox.classList.add('bg-red-500/20', 'border-red-500', 'animate-pulse', 'text-red-400');
+          els.overtimeMsg.classList.remove('hidden');
+          
+          // Trigger alarm beep every 2 seconds during overtime
+          if (currentDuration % 2 === 0) {
+            playAlarm();
+          }
+        }
+      }
+
+      // Time Window Restrictions Logic
+      const d = new Date(now);
+      const h = d.getHours();
+      const m = d.getMinutes();
+      // Shift logical time: Maps Noon(12 PM) to 0, Midnight(12 AM) to 12, 1 AM to 13...
+      const logicalTime = (h >= 12 ? h - 12 : h + 12) + (m / 60);
+
+      const isBeforeBreak1 = logicalTime < 11.0;  // Before 11:00 PM
+      const isBreak1Passed = logicalTime >= 13.0; // 1:00 AM
+      const isBeforeLunch = logicalTime < 14.0;   // Before 2:00 AM
+      const isLunchPassed = logicalTime >= 15.0;  // 3:00 AM
+      const isBeforeBreak2 = logicalTime < 16.0;  // Before 4:00 AM
+      const isBreak2Passed = logicalTime >= 17.0; // 5:00 AM
+      const isShiftNearEnd = logicalTime >= 17.833; // 5:50 AM (10 mins before 6:00 AM)
+
+      if (usedBreak1 && status !== 'BREAK_1') {
+        els.txtBreak1.textContent = "1st Break (Used)";
+      } else if (isBreak1Passed && status !== 'BREAK_1') {
+        els.txtBreak1.textContent = "1st Break (Ended)";
+      } else if (isBeforeBreak1 && status !== 'BREAK_1') {
+        els.txtBreak1.textContent = "1st Break (Wait 11 PM)";
+      } else {
+        els.txtBreak1.textContent = "Punch 1st Break";
+      }
+
+      if (usedLunch && status !== 'LUNCH') {
+        els.txtLunch.textContent = "Lunch (Used)";
+      } else if (isLunchPassed && status !== 'LUNCH') {
+        els.txtLunch.textContent = "Lunch (Ended)";
+      } else if (isBeforeLunch && status !== 'LUNCH') {
+        els.txtLunch.textContent = "Lunch (Wait 2 AM)";
+      } else {
+        els.txtLunch.textContent = "Punch Lunch";
+      }
+
+      if (usedBreak2 && status !== 'BREAK_2') {
+        els.txtBreak2.textContent = "2nd Break (Used)";
+      } else if (isBreak2Passed && status !== 'BREAK_2') {
+        els.txtBreak2.textContent = "2nd Break (Ended)";
+      } else if (isBeforeBreak2 && status !== 'BREAK_2') {
+        els.txtBreak2.textContent = "2nd Break (Wait 4 AM)";
+      } else {
+        els.txtBreak2.textContent = "Punch 2nd Break";
+      }
+
+      els.txtBio.textContent = (isShiftNearEnd && status !== 'BIO') ? "Bio (Shift Ending)" : "Punch Bio Break";
+
+      // 3. Update Buttons State
+      const isOffShift = status === 'OFF_SHIFT';
+      els.btnResume.style.display = (!isOffShift && status !== 'WORKING') ? 'flex' : 'none';
+      els.btnBreak1.disabled = isOffShift || status === 'BREAK_1' || isBreak1Passed || usedBreak1 || isBeforeBreak1;
+      els.btnLunch.disabled = isOffShift || status === 'LUNCH' || isLunchPassed || usedLunch || isBeforeLunch;
+      els.btnBreak2.disabled = isOffShift || status === 'BREAK_2' || isBreak2Passed || usedBreak2 || isBeforeBreak2;
+      els.btnBio.disabled = isOffShift || status === 'BIO' || isShiftNearEnd;
+    }
+
+    function handlePunch(newStatus) {
+      // Must unlock audio context on user interaction (button click)
+      initAudio();
+
+      const now = Date.now();
+      const d = new Date(now);
+      const h = d.getHours();
+      const m = d.getMinutes();
+      const logicalTime = (h >= 12 ? h - 12 : h + 12) + (m / 60);
+
+      // BIO BREAK VALIDATION
+      if (newStatus === 'BIO') {
+        if (logicalTime >= 17.833) {
+          showError("Bio break not allowed. Less than 10 minutes left before the shift ends (6:00 AM).");
+          return;
+        }
+
+        if (lastMainBreakEnd) {
+          const minsSinceMainBreak = (now - lastMainBreakEnd) / (1000 * 60);
+          if (minsSinceMainBreak < 30) {
+            showError(`Bio not allowed yet. You must wait 30 minutes after a main break. (${Math.ceil(30 - minsSinceMainBreak)} mins left)`);
+            return;
+          }
+        }
+        
+        if (lastBioEnd) {
+          const minsSinceLastBio = (now - lastBioEnd) / (1000 * 60);
+          if (minsSinceLastBio < 10) {
+            showError(`Bio not allowed yet. You must wait 10 minutes between bio breaks. (${Math.ceil(10 - minsSinceLastBio)} mins left)`);
+            return;
+          }
+        }
+      }
+
+      // Record Previous Status if it wasn't WORKING or OFF_SHIFT
+      if (status !== 'WORKING' && status !== 'OFF_SHIFT') {
+        const duration = Math.floor((now - statusStartTime) / 1000);
+        let prevActivity = '';
+        if (status === 'BREAK_1') prevActivity = 'First Break';
+        if (status === 'LUNCH') prevActivity = 'Lunch';
+        if (status === 'BREAK_2') prevActivity = 'Second Break';
+        if (status === 'BIO') prevActivity = 'Bio Break';
+        
+        // Add to Break History (Saving Start Time and End Time)
+        punchLogs.unshift({
+          id: Date.now(),
+          activity: prevActivity,
+          startTime: formatTime(new Date(statusStartTime)),
+          endTime: formatTime(new Date(now)),
+          duration: duration
+        });
+        
+        renderPunchLogs();
+
+        // Update tracking timestamps
+        if (status === 'BIO') {
+          lastBioEnd = now;
+        } else {
+          lastMainBreakEnd = now;
+        }
+      }
+
+      // Mark break as used
+      if (newStatus === 'BREAK_1') usedBreak1 = true;
+      if (newStatus === 'LUNCH') usedLunch = true;
+      if (newStatus === 'BREAK_2') usedBreak2 = true;
+
+      // Set New Status and Reset Warning Flags
+      status = newStatus;
+      statusStartTime = now;
+      bioWarningPlayed = false; 
+      els.errorAlert.classList.add('hidden');
+      updateUI();
+    }
+
+    // Shift Event Listeners
+    els.btnTimeIn.addEventListener('click', () => {
+      initAudio();
+
+      const shiftDate = getShiftDate();
+      if (lastLoginDate === shiftDate) {
+          showError("You have already timed in for today's shift. Multiple logins are not allowed.");
+          return;
+      }
+
+      const name = els.userNameInput.value.trim();
+      if (!name) {
+          showError("Please enter your name before timing in.");
+          return;
+      }
+      
+      lastLoginDate = shiftDate;
+
+      // Reset used break flags for the new shift
+      usedBreak1 = false;
+      usedLunch = false;
+      usedBreak2 = false;
+
+      // Add to Shift Logbook
+      shiftLogs.unshift({
+          id: Date.now(),
+          name: name,
+          date: shiftDate,
+          type: 'LOGIN'
+      });
+      
+      // Update Shift State to Working
+      status = 'WORKING';
+      statusStartTime = Date.now();
+      
+      // Toggle UI
+      els.userNameInput.disabled = true;
+      els.btnTimeIn.classList.add('hidden');
+      els.btnTimeOut.classList.remove('hidden');
+      els.errorAlert.classList.add('hidden');
+      
+      renderShiftLogs();
+      updateUI();
+    });
+
+    els.btnTimeOut.addEventListener('click', () => {
+      initAudio();
+
+      const shiftDate = getShiftDate();
+      if (lastLogoutDate === shiftDate) {
+          showError("You have already timed out for today's shift.");
+          return;
+      }
+
+      const name = els.userNameInput.value.trim();
+      
+      // If currently on a break, close the break out gracefully
+      if (status !== 'WORKING' && status !== 'OFF_SHIFT') {
+          handlePunch('WORKING'); 
+      }
+      
+      lastLogoutDate = shiftDate;
+
+      // Add to Shift Logbook
+      shiftLogs.unshift({
+          id: Date.now(),
+          name: name,
+          date: shiftDate,
+          type: 'LOGOUT'
+      });
+      
+      // Update Shift State to Off
+      status = 'OFF_SHIFT';
+      
+      // Toggle UI
+      els.userNameInput.disabled = true; // Keep disabled so name cannot be changed after shift
+      els.btnTimeIn.classList.remove('hidden');
+      els.btnTimeOut.classList.add('hidden');
+      
+      // Disable the Time In button visually for the rest of the day
+      els.btnTimeIn.disabled = true;
+      els.btnTimeIn.classList.add('opacity-50', 'cursor-not-allowed');
+      els.btnTimeIn.innerHTML = `<i data-lucide="log-in" class="w-5 h-5"></i> Shift Completed`;
+      lucide.createIcons();
+      
+      renderShiftLogs();
+      updateUI();
+    });
+
+    // Break Event Listeners
+    els.btnResume.addEventListener('click', () => handlePunch('WORKING'));
+    els.btnBreak1.addEventListener('click', () => handlePunch('BREAK_1'));
+    els.btnLunch.addEventListener('click', () => handlePunch('LUNCH'));
+    els.btnBreak2.addEventListener('click', () => handlePunch('BREAK_2'));
+    els.btnBio.addEventListener('click', () => handlePunch('BIO'));
+
+    // Start Timer loop
+    setInterval(updateUI, 1000);
+    updateUI(); // Initial call
+  </script>
+</body>
+</html>
