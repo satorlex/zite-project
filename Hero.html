@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* ZiTE & General Palettes */
             --zite-blue: #00d2ff;
             --zite-purple: #9d50bb;
             --zite-gradient: linear-gradient(90deg, #00d2ff 0%, #9d50bb 100%);
@@ -55,7 +56,24 @@
             color: var(--zite-navy);
         }
 
-        .nav-links { display: flex; gap: 30px; list-style: none; font-size: 0.9rem; font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; list-style: none; font-size: 0.8rem; font-weight: 600; align-items: center; }
+        
+        .nav-links a { text-decoration: none; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+        .nav-links a:hover { color: var(--zite-purple); }
+
+        /* THE TIME BUTTON STYLE */
+        .time-btn {
+            background: var(--zite-gradient);
+            color: white !important;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 210, 255, 0.2);
+        }
+        .time-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(157, 80, 187, 0.3);
+        }
 
         header.hero {
             padding: 80px 8% 40px;
@@ -82,7 +100,6 @@
 
         article { max-width: 830px; }
         
-        /* Updated Image Styles */
         .featured-tech-image {
             width: 100%;
             height: 450px;
@@ -124,9 +141,10 @@
             <div class="logo-text">ZiTE</div>
         </a>
         <ul class="nav-links">
-            <li>Innovations</li>
-            <li>Case Studies</li>
-            <li>Connect</li>
+            <li><a href="#">Innovations</a></li>
+            <li><a href="#">Case Studies</a></li>
+            <li><a href="#">Connect</a></li>
+            <li><a href="time.html" class="time-btn">Live Time</a></li>
         </ul>
     </nav>
 
